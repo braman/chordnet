@@ -24,7 +24,8 @@ public class Main {
 		InetAddress IP=InetAddress.getLocalHost();
 		
 		final String localIP = IP.getHostAddress();
-
+		final int localKey = Utils.hash(localIP);
+		
 		if (args.length < 1) {
 			throw new IllegalArgumentException("no successor ip");
 		}
@@ -32,6 +33,9 @@ public class Main {
 		successorIp = args[0];
 		successorKey = Utils.hash(successorIp);
 		
+		System.out.println("-------------");
+		System.out.printf("My IP: %s \n My Key: %s \n Successor Ip: %s \n Successor Key : %s \n", localIP, localKey, successorIp, successorKey);
+		System.out.println("-------------");
 		
 		final ConnectionManager localCM = ConnectionManager.getInstance(localIP);
 		
@@ -79,7 +83,10 @@ public class Main {
 		r.requesterIp = localIP;
 		r.key = Utils.hash(localIP);
 		
-		localCM.publish(Constants.FIND_QUEUE, r.toString());
+		System.out.println("Initiating task: " + r.toString());
+		
+		
+		ConnectionManager.getInstance(successorIp).publish(Constants.FIND_QUEUE, r.toString());
 		
 		
 		localFinder.start();
