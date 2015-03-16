@@ -58,11 +58,11 @@ public class Main {
 		successorHash = Utils.hash(successorIp);
 		
 		System.out.println();
-		System.out.println("------Info-------");
+		System.out.println("-----------------------INFO-----------------------");
 		System.out.printf("My IP: %s. My Hash: %s\n", localIP, localHash);
 		System.out.printf("Successor IP: %s. Successor Hash: %s\n", successorIp, successorHash);
 		System.out.printf("Predecessor IP: %s. Predecessor Hash: %s\n", predecessorIp, predecessorHash);
-		System.out.println("-------------");
+		System.out.println("--------------------------------------------------");
 		System.out.println();
 		
 		final ConnectionManager localCM = ConnectionManager.getInstance(localIP);
