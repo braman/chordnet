@@ -67,7 +67,9 @@ public class ConnectionManager {
 				c.close();
 			}
 			
-			consumer.callback(d);
+			String message = new String(d.getBody());
+			
+			consumer.callback(message);
 		}
 		
 	}
@@ -79,8 +81,19 @@ public class ConnectionManager {
 	}
 	
 	
+	public void closeAllConnections() {
+		for (String ip: connectionMap.keySet()) {
+			try {
+				connectionMap.get(ip).close();
+			} catch (Exception e) {
+				System.err.println("Failed to close connection to ip:" + ip);
+			}
+		}
+	}
+	
+	
 	interface Consumer {
-		void callback(Delivery d);
+		void callback(String message);
 	}
 	
 	

@@ -1,7 +1,6 @@
 import java.io.IOException;
 import java.net.InetAddress;
-
-import com.rabbitmq.client.QueueingConsumer.Delivery;
+import java.util.Scanner;
 
 import common.Request;
 import common.Response;
@@ -16,49 +15,77 @@ public class Main {
 //	public static final String KUANYSH_NETWORK ="192.168.1.104";
 //	public static final String LOCAL_NETWORK ="localhost";
 
-	private static int successorKey;
+	private static int successorHash;
 	private static String successorIp;
+	
+	private static int predecessorHash;
+	private static String predecessorIp;
 	
 	
 	public static void main(String[] args) throws Throwable {
-		InetAddress IP=InetAddress.getLocalHost();
+		InetAddress IP = InetAddress.getLocalHost();
 		
 		final String localIP = IP.getHostAddress();
-		final int localKey = Utils.hash(localIP);
+		final int localHash = Utils.hash(localIP);
 		
-		if (args.length < 1) {
-			throw new IllegalArgumentException("no successor ip");
+		Scanner in = new Scanner(System.in);
+		
+		System.out.print("Enter predecessor ip: ");
+		
+		while (true) {
+			String line = in.nextLine();
+			if (Utils.isValidIp(line)) {
+				predecessorIp = line;
+				break;
+			} else {
+				System.out.print("You've entered invalid ip! Please try again:");
+			}
+		}
+		predecessorHash = Utils.hash(predecessorIp);
+		
+		System.out.print("Enter successor ip: ");
+		
+		while (true) {
+			String line = in.nextLine();
+			if (Utils.isValidIp(line)) {
+				successorIp = line;
+				break;
+			} else {
+				System.out.print("You've entered invalid ip! Please try again:");
+			}
 		}
 		
-		successorIp = args[0];
-		successorKey = Utils.hash(successorIp);
+		successorHash = Utils.hash(successorIp);
 		
+		System.out.println();
+		System.out.println("------Info-------");
+		System.out.printf("My IP: %s. My Hash: %s\n", localIP, localHash);
+		System.out.printf("Successor IP: %s. Successor Hash: %s\n", successorIp, successorHash);
+		System.out.printf("Predecessor IP: %s. Predecessor Hash: %s\n", predecessorIp, predecessorHash);
 		System.out.println("-------------");
-		System.out.printf("My IP: %s \n My Key: %s \n Successor Ip: %s \n Successor Key : %s \n", localIP, localKey, successorIp, successorKey);
-		System.out.println("-------------");
+		System.out.println();
 		
 		final ConnectionManager localCM = ConnectionManager.getInstance(localIP);
 		
 		ConsumerThread localFinder = new ConsumerThread(localCM, Constants.FIND_QUEUE, new ConnectionManager.Consumer() {
 			@Override
-			public void callback(Delivery d) {
-				String taskStr = new String(d.getBody());
-				
-				Request req = Request.parse(taskStr);
+			public void callback(String message) {
+				Request req = Request.parse(message);
 				
 				if (req == null) {
-					System.err.println("Failed to parse request:" + taskStr);
+					System.err.println("Failed to parse request:" + message);
 					return;
 				}
 				
 				try {
 
-					if (successorKey == req.key) {
+					if (successorHash == req.key) {
 						Response resp = new Response();
 						resp.key = req.key;
 						resp.successorIp = successorIp;
 						ConnectionManager.getInstance(req.requesterIp).publish(Constants.FOUND_QUEUE, resp.toString());
 					} else {
+						ConnectionManager.getInstance(predecessorIp).publish(Constants.FIND_QUEUE, req.toString());
 						ConnectionManager.getInstance(successorIp).publish(Constants.FIND_QUEUE, req.toString());
 					}
 					
@@ -67,38 +94,42 @@ public class Main {
 				}
 				
 				
-				System.out.println("FIND TASK:" + taskStr);
+				System.out.println("FIND TASK:" + message);
 			}
 		});
 		
 		ConsumerThread localFounder = new ConsumerThread(localCM, Constants.FOUND_QUEUE, new ConnectionManager.Consumer() {
 			@Override
-			public void callback(Delivery d) {
-				String s = new String(d.getBody());
-				System.out.println("FOUND:" + s);
+			public void callback(String message) {
+				System.out.println("Find Result:" + message);
 			}
 		});
-		
-		Request r = new Request();
-		r.requesterIp = localIP;
-		r.key = Utils.hash(localIP);
-		
-		System.out.println("Initiating task: " + r.toString());
-		
-		
-		ConnectionManager.getInstance(successorIp).publish(Constants.FIND_QUEUE, r.toString());
 		
 		
 		localFinder.start();
 		localFounder.start();
 		
 		
+		while (true) {
+			
+			System.out.println("~Lookup request console~");
+			System.out.print("Enter hash, or any negative number for exit: ");
+			
+			int hashKey = in.nextInt();
+			
+			if (hashKey < 0) {
+				break;
+			}
+			
+			Request req = new Request();
+			req.requesterIp = localIP;
+			req.key = hashKey;
+			
+			ConnectionManager.getInstance(localIP).publish(Constants.FIND_QUEUE, req.toString());
+			
+		}
 		
-		
-		
-		
-		//localCM.close();
-		
+		localCM.closeAllConnections();
 	}
 	
 	

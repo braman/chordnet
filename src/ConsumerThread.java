@@ -32,9 +32,8 @@ public class ConsumerThread extends Thread {
 			} else {
 				cm.consume(queue, new ConnectionManager.Consumer() {
 					@Override
-					public void callback(Delivery d) {
-						String str = new String(d.getBody());
-						System.out.println("Consuming: " + str);
+					public void callback(String message) {
+						System.out.println("Consuming message: " + message);
 						
 					}
 				});
