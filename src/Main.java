@@ -18,8 +18,8 @@ public class Main {
 	private static int successorHash;
 	private static String successorIp;
 	
-	private static int predecessorHash;
-	private static String predecessorIp;
+	//private static int predecessorHash;
+	//private static String predecessorIp;
 	
 	
 	public static void main(String[] args) throws Throwable {
@@ -29,19 +29,6 @@ public class Main {
 		final int localHash = Utils.hash(localIP);
 		
 		Scanner in = new Scanner(System.in);
-		
-		System.out.print("Enter predecessor ip: ");
-		
-		while (true) {
-			String line = in.nextLine();
-			if (Utils.isValidIp(line)) {
-				predecessorIp = line;
-				break;
-			} else {
-				System.out.print("You've entered invalid ip! Please try again:");
-			}
-		}
-		predecessorHash = Utils.hash(predecessorIp);
 		
 		System.out.print("Enter successor ip: ");
 		
@@ -61,7 +48,7 @@ public class Main {
 		System.out.println("-----------------------INFO-----------------------");
 		System.out.printf("My IP: %s. My Hash: %s\n", localIP, localHash);
 		System.out.printf("Successor IP: %s. Successor Hash: %s\n", successorIp, successorHash);
-		System.out.printf("Predecessor IP: %s. Predecessor Hash: %s\n", predecessorIp, predecessorHash);
+		//System.out.printf("Predecessor IP: %s. Predecessor Hash: %s\n", predecessorIp, predecessorHash);
 		System.out.println("--------------------------------------------------");
 		System.out.println();
 		
@@ -77,15 +64,19 @@ public class Main {
 					return;
 				}
 				
+				int min = Math.min(localHash, successorHash);
+				int max = Math.min(localHash, successorHash);
+				
+				
 				try {
 
-					if (successorHash == req.key) {
+					if (min >=  req.key && req.key <= max) {
 						Response resp = new Response();
 						resp.key = req.key;
-						resp.successorIp = successorIp;
+						resp.successorIp = localIP;
 						ConnectionManager.getInstance(req.requesterIp).publish(Constants.FOUND_QUEUE, resp.toString());
 					} else {
-						ConnectionManager.getInstance(predecessorIp).publish(Constants.FIND_QUEUE, req.toString());
+						//ConnectionManager.getInstance(predecessorIp).publish(Constants.FIND_QUEUE, req.toString());
 						ConnectionManager.getInstance(successorIp).publish(Constants.FIND_QUEUE, req.toString());
 					}
 					
@@ -109,10 +100,9 @@ public class Main {
 		localFinder.start();
 		localFounder.start();
 		
+		System.out.println("~Lookup request console~");
 		
 		while (true) {
-			
-			System.out.println("~Lookup request console~");
 			System.out.print("Enter hash, or any negative number for exit: ");
 			
 			int hashKey = in.nextInt();
