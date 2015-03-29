@@ -51,10 +51,10 @@ public class ConnectionManager {
 		
 		c.queueDeclare(queue, false, false, false, null);
 		
-		
 		QueueingConsumer cons = new QueueingConsumer(c);
 		
 		boolean autoAck = true;
+		
 		c.basicConsume(queue, autoAck, cons);
 		
 		
@@ -69,10 +69,16 @@ public class ConnectionManager {
 			
 			String message = new String(d.getBody());
 			
-			consumer.callback(message);
+			if (consumer.callback(message)) {
+				c.close();
+				break;				
+			}
 		}
 		
 	}
+	
+	
+//	public void findSuccessor(String nodeHashKey, String publishQueue, String consumeQueue, )
 	
 	public void close() throws IOException {
 		if (connection != null) {
@@ -93,8 +99,6 @@ public class ConnectionManager {
 	
 	
 	interface Consumer {
-		void callback(String message);
+		boolean callback(String message);
 	}
-	
-	
 }

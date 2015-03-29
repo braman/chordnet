@@ -6,5 +6,8 @@ public class Constants {
 	
 	public static final String FIND_QUEUE = "find";
 	public static final String FOUND_QUEUE = "found";
+	public static final String NOTIFY_QUEUE = "notify";
+
 	
+	public static final int DEFAULT_SLEEP_TO = 10000;
 }

@@ -1,7 +1,5 @@
 import java.io.IOException;
 
-import com.rabbitmq.client.QueueingConsumer.Delivery;
-
 
 public class ConsumerThread extends Thread {
 	
@@ -32,9 +30,9 @@ public class ConsumerThread extends Thread {
 			} else {
 				cm.consume(queue, new ConnectionManager.Consumer() {
 					@Override
-					public void callback(String message) {
+					public boolean callback(String message) {
 						System.out.println("Consuming message: " + message);
-						
+						return false;
 					}
 				});
 			}

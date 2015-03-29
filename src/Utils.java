@@ -1,3 +1,8 @@
+import java.net.InetAddress;
+import java.net.InterfaceAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -21,6 +26,22 @@ public class Utils {
 	public static boolean isValidIp(String ip) {
 		final String PATTERN = "^(([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.){3}([01]?\\d\\d?|2[0-4]\\d|25[0-5])$";
 		return ip != null && ip.matches(PATTERN);
+	}
+	
+	
+	
+	public static InetAddress getLocalAddress(){
+		try {
+			Enumeration<NetworkInterface> b = NetworkInterface.getNetworkInterfaces();
+			while( b.hasMoreElements()){
+				for ( InterfaceAddress f : b.nextElement().getInterfaceAddresses())
+					if ( f.getAddress().isSiteLocalAddress())
+						return f.getAddress();
+			}
+		} catch (SocketException e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 	
 	
