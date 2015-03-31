@@ -74,7 +74,7 @@ public class Main {
 							resp.key = req.key;
 							resp.ip = successorIp;
 							
-							ConnectionManager.getInstance(req.requesterIp).publish(Constants.FOUND_QUEUE, resp.toString());
+							ConnectionManager.getInstance(req.requesterIp).publish(req.replyTarget, resp.toString());
 						} else {
 							ConnectionManager.getInstance(successorIp).publish(Constants.FIND_QUEUE, req.toString());
 						}
@@ -87,7 +87,7 @@ public class Main {
 						resp.key = predecessorHash;
 						resp.ip = predecessorIp;
 						
-						ConnectionManager.getInstance(req.requesterIp).publish(Constants.FOUND_QUEUE, resp.toString());
+						ConnectionManager.getInstance(req.requesterIp).publish(req.replyTarget, resp.toString());
 					}
 
 				} catch (IOException e) {
@@ -106,7 +106,8 @@ public class Main {
 		Request findSuccessorRequest = new Request();
 		findSuccessorRequest.key = localHash;
 		findSuccessorRequest.requesterIp = localIP;
-
+		findSuccessorRequest.replyTarget = Constants.FOUND_QUEUE;
+		
 		tryCM.publish(Constants.FIND_QUEUE, findSuccessorRequest.toString());
 
 		
@@ -131,17 +132,19 @@ public class Main {
 		System.out.println("--------------------------------------------------");
 		System.out.println();
 
-/*
-		ConsumerThread localFounder = new ConsumerThread(localCM, Constants.FOUND_QUEUE, new ConnectionManager.Consumer() {
+
+		ConsumerThread localFounder = new ConsumerThread(localCM, Constants.LOOKUP_QUEUE, new ConnectionManager.Consumer() {
 			@Override
 			public boolean callback(String message) {
-				System.out.println("Incoming Result:" + message);
+				String printPrefix = "----------|";				
+				System.out.println(printPrefix + "Running localFounderThread");
+				System.out.println(printPrefix + "Incoming Result:" + message);
 				return false;
 			}
 		});
 		
 		localFounder.start();
-*/
+
 		
 		
 		Thread stabilizerThread = new Thread(new Runnable() {
@@ -164,11 +167,12 @@ public class Main {
 						successorPredecessorRequest.type = Request.PREDECESSOR;
 						successorPredecessorRequest.key = localHash;
 						successorPredecessorRequest.requesterIp = localIP;
+						successorPredecessorRequest.replyTarget = Constants.FOUND_QUEUE;
+						
 						
 						ConnectionManager.getInstance(successorIp).publish(Constants.FIND_QUEUE, successorPredecessorRequest.toString());
 		
 						System.out.println(printPrefix + "Asking successor "+successorIp + " about predecessor");
-						
 						
 						localCM.consume(Constants.FOUND_QUEUE, new ConnectionManager.Consumer() {
 							@Override
@@ -241,7 +245,7 @@ public class Main {
 		
 		//System.out.printf("Predecessor IP: %s. Predecessor Hash: %s\n", predecessorIp, predecessorHash);
 
-/*
+
 		System.out.println("~Lookup request console~");
 
 		while (true) {
@@ -256,12 +260,13 @@ public class Main {
 			Request req = new Request();
 			req.requesterIp = localIP;
 			req.key = hashKey;
-
+			req.replyTarget = Constants.LOOKUP_QUEUE;
+			
 			ConnectionManager.getInstance(localIP).publish(Constants.FIND_QUEUE, req.toString());
 
 		}
-*/
-		//localCM.closeAllConnections();
+
+		localCM.closeAllConnections();
 	}
 
 
